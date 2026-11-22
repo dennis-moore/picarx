@@ -22,7 +22,9 @@ body:
     id: method
     attributes:
       label: Test method
-      description: How it will be checked on the car, including the safety precondition (e.g. wheels off the ground, picard stopped).
+      description: >-
+        How it will be checked on the car, including the safety precondition
+        (e.g. wheels off the ground, picard stopped).
   - type: textarea
     id: findings
     attributes:

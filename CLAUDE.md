@@ -64,7 +64,7 @@ ctest --test-dir build --output-on-failure
 
 ## Git & workflow
 
-- **Default branch is `master`** (PLAN.md says `main`; same rules apply). Never push to it; never merge PRs — the user reviews and merges on GitHub.
+- **Default branch is `master`.** Never push to it; never merge PRs — the user reviews and merges on GitHub.
 - One issue per session ("Implement #12"). **Plan mode first**; no code until the plan is approved.
 - One short-lived branch per task: `m<N>/<task>` (e.g. `m1/i2c-bus`). Always push with an explicit branch name: `git push -u origin m1/i2c-bus`.
 - One PR per task, aiming for **< ~300 changed lines**, small logical commits, **Conventional Commits** (`feat(hal): add I2C bus wrapper`). Use `Fixes #N` in the PR body. Open with `gh pr create`; fill in the PR template's hardware checklist honestly (mark N/A or leave unchecked what wasn't done).

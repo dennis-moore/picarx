@@ -1,0 +1,39 @@
+name: Hardware investigation
+description: Verify a hardware fact or resolve a doc conflict (pin mapping, MCU protocol, servo channels, ...).
+title: "[hw] "
+labels: ["question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: The single fact to establish.
+      placeholder: Does the MCU expect the high byte first for 16-bit PWM writes?
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: robot-hat source (file + line), docs URLs, and what each one claims.
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Test method
+      description: How it will be checked on the car, including the safety precondition (e.g. wheels off the ground, picard stopped).
+  - type: textarea
+    id: findings
+    attributes:
+      label: Findings
+      description: Fill in once resolved. Include evidence (command output, measurements, source citations).
+  - type: checkboxes
+    id: docs
+    attributes:
+      label: Docs to update
+      options:
+        - label: docs/hardware.md
+        - label: docs/PLAN.md
+        - label: CLAUDE.md
+        - label: docs/decisions/

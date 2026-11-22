@@ -1,0 +1,61 @@
+name: Task
+description: A unit of milestone work, sized for one branch and one PR (~300 lines).
+title: "[M?] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Milestone
+      options:
+        - M0 Foundation
+        - M1 HAL + picar CLI
+        - M2 picard + protocol v1
+        - M3 Dashboard v1
+        - M4 Sensors
+        - M5 Video + teleop polish
+        - M5b Remote access
+        - M6 Reactive autonomy
+        - M7 Recording + vision
+        - M8 Odometry hardware
+        - M9 Localization + mapping
+        - Side quest
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should exist when this is done, and why.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Done when
+      description: Concrete, checkable acceptance criteria.
+      placeholder: |
+        - [ ] `picar battery` prints the voltage, within 0.1 V of a multimeter reading
+        - [ ] Unit tests cover ...
+    validations:
+      required: true
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Hardware involvement
+      options:
+        - None (pure software, mocks only)
+        - Reads hardware (sensors, battery, buttons)
+        - Moves the car (motors or servos)
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety considerations
+      description: Stand vs. floor testing, stop path, watchdog impact, power budget.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes and references
+      description: Relevant PLAN.md sections, robot-hat source, docs links.

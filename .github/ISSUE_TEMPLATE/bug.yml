@@ -1,0 +1,62 @@
+name: Bug
+description: Something behaves wrongly, on the car or in software.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      multiple: true
+      options:
+        - hal (libpicar_hal)
+        - net (libpicar_net)
+        - picard
+        - picar CLI
+        - dashboard
+        - proto
+        - video
+        - py
+        - CI / build
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety impact
+      description: Check all that apply. Any of these makes the bug top priority.
+      options:
+        - label: The car moved unexpectedly
+        - label: The car did not stop when it should have (watchdog, stop command, client loss)
+        - label: The Pi rebooted, browned out or reported throttling
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened vs. what was expected
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Car on stand, picard running
+        2. `picar --remote drive 0.3 --for 1s`
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      value: |
+        - Commit:
+        - Battery voltage:
+        - picard running (direct or remote mode):
+        - `vcgencmd get_throttled`:
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: e.g. `journalctl -u picard --since "10 min ago"`
+      render: text

@@ -186,7 +186,7 @@ Turn a SunFounder PiCar-X into a platform for learning and building autonomy, on
 | SunFounder code | Reference only. Disable its autostart services; nothing of theirs touches I2C at runtime |
 | Python client | Not needed early; `picar --remote` covers testing until Python is needed for vision |
 | Remote access | Tailscale + desktop app; web client optional |
-| Repo hosting | **Public** GitHub repo, so branch protection on `main` is free |
+| Repo hosting | **Public** GitHub repo, so branch protection on `master` is free |
 
 ---
 
@@ -211,7 +211,7 @@ picarx/
 ## 6. Workflow
 
 - **GitHub, public repo. GitHub flow**:
-  - `main` protected by branch protection (or a ruleset): require a pull request, require CI to pass, no force-pushes. Allow yourself to bypass only for emergencies.
+  - `master` protected by branch protection (or a ruleset): require a pull request, require CI to pass, no force-pushes. Allow yourself to bypass only for emergencies.
   - one short-lived branch per task (`m1/i2c-bus`)
   - **one PR per task, aiming for under ~300 changed lines**, with small logical commits inside it (Conventional Commits: `feat(hal): add I2C bus wrapper`)
 - **Because the repo is public, never commit secrets**: Wi-Fi credentials, Tailscale auth keys, tokens. Keep them in untracked local config (listed in `.gitignore`).
@@ -222,7 +222,7 @@ picarx/
   - One issue per session ("Implement #12"). **Plan first** (plan mode), and approve the plan before any code is written.
   - Claude creates the branch, commits in small steps and opens the PR with `gh pr create`. Review on GitHub.
   - Optionally, have Claude review the PR in a fresh session first.
-  - `.claude/settings.json` permissions: anything that moves the car (`picar drive`, starting or restarting picard) **always asks for approval**; deny `git push` to `main`.
+  - `.claude/settings.json` permissions: anything that moves the car (`picar drive`, starting or restarting picard) **always asks for approval**; deny `git push` to `master`.
   - `CLAUDE.md` holds the architecture, conventions (no allocation in loops, single hardware owner, protocol rules), hardware facts and safety rules.
 
 ---
@@ -233,7 +233,7 @@ Each milestone ends with a demo. The dashboard grows with every milestone after 
 
 | # | Milestone | Key tasks | Done when |
 |---|---|---|---|
-| **M0** | Foundation | Repo, CMake, GoogleTest, formatter config, CI; branch protection on `main`; disable SunFounder autostart services; logging; picard systemd unit (hello); enable the hardware watchdog | Builds on the Pi; CI green; `systemctl status picard` shows it running |
+| **M0** | Foundation | Repo, CMake, GoogleTest, formatter config, CI; branch protection on `master`; disable SunFounder autostart services; logging; picard systemd unit (hello); enable the hardware watchdog | Builds on the Pi; CI green; `systemctl status picard` shows it running |
 | **M1** | HAL + `picar` CLI | I2C wrapper + MCU reset; **confirm the MCU protocol against the robot-hat source**; PWM/timer setup; servos with a calibration file; motors (direction + PWM) with differential turning; battery, LED, debounced buttons | `picar steer -10`, `picar drive 0.3 --for 1s`, `picar pan 30`, `picar battery` work (car on a stand) |
 | **M2** | picard + protocol v1 | `.proto` v1; UDP transport; SCHED_FIFO control thread + network thread + SPSC queue; client table; command watchdog; systemd service watchdog; lock file; `picar --remote` | Drive through picard with `picar --remote`; killing the client stops the motors within 250 ms (`picar --remote test watchdog`) |
 | **M3** | Dashboard v1 | Avalonia app: connection status, live telemetry plots, keyboard + Xbox driving | Drive from the laptop while watching live data |

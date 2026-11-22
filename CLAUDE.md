@@ -6,9 +6,10 @@ Context and rules for Claude Code working in this repo. **`docs/PLAN.md` is the 
 
 A SunFounder PiCar-X turned into an autonomy learning platform, one demoable milestone at a time (M0 foundation → M9 mapping; see PLAN.md §7).
 
-- **Status:** pre-M0. No code yet. Planned layout is in PLAN.md §5 (`proto/`, `libs/hal/`, `libs/net/`, `picard/`, `tools/picar-cli/`, `dashboard/`, `py/`, `docs/`).
+- **Current status:** see open GitHub milestones and issues (`gh api repos/{owner}/{repo}/milestones`, `gh issue list`); don't infer it from this file. Planned layout is in PLAN.md §5 (`proto/`, `libs/hal/`, `libs/net/`, `picard/`, `tools/picar-cli/`, `dashboard/`, `py/`, `docs/`).
 - **Languages:** C++20 (HAL, daemon, CLI), C# Avalonia (dashboard, runs on the laptop), Python (vision/ML from M7).
 - **This copy of Claude runs on the Pi itself** (`creampi`), so commands here can touch real hardware. A second copy runs on the laptop for the dashboard.
+- This file covers C++ and hardware. C#/Avalonia conventions will go in `dashboard/CLAUDE.md` when dashboard work starts (Claude Code reads it when working in that directory).
 
 ## Architecture
 
@@ -36,7 +37,7 @@ ctest --test-dir build --output-on-failure
 
 - Unit tests use GoogleTest against mocks and must run on a laptop and in CI with no hardware.
 - **Hardware tests are never registered with ctest.** They run only through explicit `picar` commands (e.g. `picar --remote test watchdog`), with user approval.
-- Built natively on the Pi with GCC; Pi 4 has 4 GB — keep `-j4` or lower.
+- Built natively on the Pi with GCC; Pi 4 has 4 GB — keep `-j4` or lower, and drop to `-j2` if the build gets killed for running out of memory (protobuf and template-heavy code are the usual cause).
 
 ## Code conventions
 
@@ -59,14 +60,21 @@ ctest --test-dir build --output-on-failure
 
 **General:**
 - Per-car calibration (servo trims, limits) lives in a config file, never hard-coded.
+- **`picar` direct mode must be safe by construction**, not by Claude remembering flags: every actuator command has a default maximum duration (e.g. 2 s) and clamps throttle to a configurable cap; all motors are zeroed on normal exit, SIGINT/SIGTERM, or any error (RAII guard plus a signal handler).
 - SunFounder code is reference only. Nothing of theirs touches I2C at runtime.
 - Record decisions as one note per decision in `docs/decisions/`; hardware findings in `docs/hardware.md`; protocol in `docs/protocol.md`.
+
+**TBD in M0 — don't decide these silently.** If a task needs one before it's settled, raise it with the user and record the answer in `docs/decisions/`:
+- clang-format style and naming conventions
+- whether exceptions are allowed outside the control thread
+- the logging library
+- error-handling style (`std::expected` vs. error codes)
 
 ## Git & workflow
 
 - **Default branch is `master`.** Never push to it; never merge PRs — the user reviews and merges on GitHub.
 - One issue per session ("Implement #12"). **Plan mode first**; no code until the plan is approved.
-- One short-lived branch per task: `m<N>/<task>` (e.g. `m1/i2c-bus`). Always push with an explicit branch name: `git push -u origin m1/i2c-bus`.
+- One short-lived branch per task: `m<N>/<task>` (e.g. `m1/i2c-bus`). Always push with an explicit branch name: `git push -u origin m1/i2c-bus` (bare `git push` and `git push origin HEAD` are denied in settings).
 - One PR per task, aiming for **< ~300 changed lines**, small logical commits, **Conventional Commits** (`feat(hal): add I2C bus wrapper`). Use `Fixes #N` in the PR body. Open with `gh pr create`; fill in the PR template's hardware checklist honestly (mark N/A or leave unchecked what wasn't done).
 - **Public repo: never commit secrets** (Wi-Fi credentials, Tailscale auth keys, tokens). Keep them in untracked local config listed in `.gitignore`.
 
@@ -104,19 +112,19 @@ Full tables in PLAN.md §2. Key facts:
 2. 16-bit byte order (probably high byte first; SMBus `write_word_data` sends low first).
 3. Whether the prescaler register takes `prescaler` or `prescaler − 1`.
 
-**Unverified (M1):** which motor is left/right; servo channels (expected P0 = pan, P1 = tilt, P2 = steering); ultrasonic trig D2/GPIO27, echo D3/GPIO22; grayscale on ADC A0–A2. Treat these as assumptions until a hardware investigation confirms them.
+**Unverified (M1):** which motor is left/right; servo channels (expected P0 = pan, P1 = tilt, P2 = steering); ultrasonic trig D2/GPIO27, echo D3/GPIO22; grayscale on ADC A0–A2; motor direction polarity (which level on GPIO23/24 means forward, and whether the two motors are mirrored). Treat these as assumptions until a hardware investigation confirms them.
 
 ## Safety rules (hard rules for Claude)
 
 The car is real, and the MCU **keeps outputting its last PWM if the Pi hangs**. The Pi hardware watchdog reboots the Pi but does **not** stop the motors.
 
-1. **Never move the car without the user's approval at that moment.** That covers `picar` actuator commands (drive, steer, pan, tilt, test), running or (re)starting `picard`, raw `i2cset`/`i2ctransfer`/`gpioset`/`pinctrl`, and any script that imports robot-hat. `.claude/settings.json` forces a prompt for these. Do not try to route around it (wrappers, aliases, `bash -c`, scripts that do the same thing).
+1. **Never move the car or drive the hardware without the user's approval at that moment.** That covers `picar` actuator commands (drive, steer, pan, tilt, test), running or (re)starting `picard`, raw `i2cset`/`i2ctransfer`/`gpioset`/`pinctrl`, any script that imports robot-hat, SunFounder's example scripts (`sudo python3 …/example/*.py`), the `robot_hat` CLI (e.g. `robot_hat reset_mcu`), `systemctl start/restart/stop` for any service, and `sudo` in general. `.claude/settings.json` forces a prompt for these. Do not try to route around it (wrappers, aliases, `bash -c`, scripts that do the same thing).
 2. **Before asking, say what will move, how fast, for how long, and the precondition.** New or changed motion code: **car on a stand, wheels off the ground**. Floor tests: low speed, open space, only after a stand test passed.
 3. **Always keep a stop path.** Use short durations (`--for 1s`) and low throttle (≤ 0.3) by default. Know the stop command (`picar stop`, or kill the remote client so the watchdog fires) before starting.
-4. **One I2C owner.** Check `systemctl is-active picard` before any direct-mode command. Don't probe the bus (`i2cdetect`, `i2cget`, `i2cdump`) while picard owns it.
-5. **Pins:** only touch GPIO5 with the documented reset sequence. Leave I2S (18/19/21) alone. `gpioget`/`gpiomon` reconfigure a line as input, so never run them on 23/24 (motor direction) or other driven outputs.
+4. **One I2C owner.** Check `systemctl is-active picard` before any direct-mode command. Don't run `i2cdetect`/`i2cget`/`i2cdump`/`i2cset`/`i2ctransfer` on bus 1 without approval, **even when picard isn't running**: probes hit 0x14 too, and the stock firmware expects fixed frames and can desync from unexpected transfers. If the MCU stops responding afterwards, report it; recovery is the GPIO5 reset.
+5. **Pins:** only touch GPIO5 with the documented reset sequence. Leave I2S (18/19/21) alone. `gpioget`/`gpiomon` reconfigure a line as input, so never run them on 23/24 (motor direction), 26 (USER LED, once picard drives it) or other driven outputs.
 6. **If anything hangs or the Pi reboots mid-test, assume the motors may still be running.** Tell the user immediately; don't silently retry.
-7. **Power:** check battery voltage and `vcgencmd get_throttled` before motor tests; below ~7.15 V, ask the user to charge first. Never "fix" a stall or brownout by raising power or retrying harder; report it.
+7. **Power:** check battery voltage and `vcgencmd get_throttled` before motor tests; below ~7.15 V, ask the user to charge first. The battery reading is itself an I2C read, so it follows rule 4: use `picar battery` (direct mode, after the `systemctl is-active picard` check) or picard's telemetry. Until `picar` exists, ask the user to read the battery LEDs. Never "fix" a stall or brownout by raising power or retrying harder; report it.
 8. **Never weaken safety layers** (command watchdog timeout, systemd watchdog, hardware watchdog, speed caps) without an explicit decision note in `docs/decisions/` that the user approved.
 9. **Never port-forward or expose picard** beyond the LAN/Tailscale.
 10. Don't run Claude with `--dangerously-skip-permissions` on the Pi (bypass mode is disabled in project settings).

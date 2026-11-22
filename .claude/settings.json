@@ -96,20 +96,46 @@
 
       "Bash(python *)",
       "Bash(python3 *)",
+      "Bash(robot_hat)",
+      "Bash(robot_hat *)",
+      "Bash(*/robot_hat)",
+      "Bash(*/robot_hat *)",
 
       "Bash(reboot *)",
       "Bash(shutdown *)",
       "Bash(poweroff *)",
 
-      "Bash(gh pr merge *)"
+      "Bash(gh api * -X *)",
+      "Bash(gh api -X *)",
+      "Bash(gh api * --method *)",
+      "Bash(gh api --method *)",
+      "Bash(gh api * -f *)",
+      "Bash(gh api * -F *)",
+      "Bash(gh api * --field *)",
+      "Bash(gh api * --raw-field *)",
+      "Bash(gh api * --input *)",
+      "Bash(gh repo edit *)"
     ],
     "deny": [
+      "Bash(git push)",
+      "Bash(git push -q)",
+      "Bash(git push --quiet)",
+      "Bash(git push -u)",
+      "Bash(git push origin)",
+      "Bash(git push * HEAD)",
       "Bash(git push * master)",
       "Bash(git push * HEAD:master)",
       "Bash(git push * *:master)",
       "Bash(git push --force *)",
       "Bash(git push -f *)",
-      "Bash(git push --force-with-lease *)"
+      "Bash(git push --force-with-lease *)",
+      "Bash(git push *--force*)",
+      "Bash(git push * -f)",
+      "Bash(git push * -f *)",
+
+      "Bash(gh pr merge)",
+      "Bash(gh pr merge *)",
+      "Bash(gh repo delete *)"
     ]
   }
 }
